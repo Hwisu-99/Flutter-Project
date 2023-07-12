@@ -1,1 +1,1 @@
-# Flutter-Project
+# Create Diet Management Application using Flutter

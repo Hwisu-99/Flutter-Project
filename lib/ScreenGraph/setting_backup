@@ -1,0 +1,130 @@
+import 'package:flutter/cupertino.dart';
+import'package:flutter/material.dart';
+import 'package:flutter_app/ScreenGraph/ScreenGraphDay.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_app/screen/ScreenSetting.dart';
+
+// StatelessWidget은 변화지 않는 화면을 작업할 때 사용.
+// 변화는 화면을 작업 하고싶을 경우에는 StatefulWidget을 사용.
+class ScreenSetting extends StatelessWidget {
+  const ScreenSetting({super.key});
+
+
+  // MaterialApp = 앱으로서 기능을 할 수 있도록 도와주는 뼈대
+  @override
+  Widget build(BuildContext context) {
+
+    return GestureDetector(
+      onTap: () {
+        FocusManager.instance.primaryFocus?.unfocus(); // 키보드 닫기 이벤트
+      },
+      child : MaterialApp(
+        title: "ScreenSetting", // 앱 이름
+        debugShowCheckedModeBanner: false, // 타이틀 바 우측 띠 제거
+
+        // 앱의 기본적인 테마를 지정
+        theme: ThemeData(
+          primarySwatch: Colors.blue, // priamrySwatch 기본적인 앱의 색상을 지정
+        ),
+
+        home: MySettingWidget(), // 앱이 실행될 때 표시할 화면의 함수를 호출
+      ),
+    );
+  }
+}
+
+// 앱이 실행 될때 표시할 화면의 함수
+class MySettingWidget extends StatefulWidget {
+  const MySettingWidget({super.key});
+
+  @override
+  State<MySettingWidget> createState() => MySettingWidgetState();
+}
+
+class MySettingWidgetState extends State<MySettingWidget> {
+
+  final TextEditingController myWeightGoalController = TextEditingController();
+  late SharedPreferences _prefs;
+  double goalWeight = 0.0 ;
+
+  @override
+  void initState() {
+    super.initState();
+    getUserGoalWeight();
+  }
+
+  _saveUserGoalWeight(){
+    setState(() {
+      goalWeight = double.tryParse(myWeightGoalController.text) ?? 0.0;
+      _prefs.setDouble("currentUserName", goalWeight);
+    });
+  }
+
+  getUserGoalWeight() async {
+    _prefs = await SharedPreferences.getInstance();
+    setState(() {
+      goalWeight = _prefs.getDouble("currentUserName") ?? 0.0;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+
+      // appBar에 AppBar 위젯을 가져온다.
+      appBar: AppBar(
+        title: Text("설정",
+          style: TextStyle(
+              fontSize: 26
+          ),
+        ),
+        centerTitle: true,
+        elevation: 0.0,
+        toolbarHeight: 70,
+        leading: IconButton(onPressed: () {}, icon: const Icon(Icons.menu),),
+      ),
+      body: SingleChildScrollView(
+        child: Column(
+            children:  [
+              Padding(
+                padding: EdgeInsets.all(20.0),
+                child: TextField(
+                  controller: myWeightGoalController,
+                  keyboardType: TextInputType.number,
+                  decoration: InputDecoration(
+                    labelText: "목표 몸무게 (kg)",
+                    labelStyle: TextStyle(
+                      color: Colors.redAccent, //<-- SEE HERE
+                    ),
+                    hintText: "0.0 kg",
+                    floatingLabelBehavior: FloatingLabelBehavior.always,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.all(Radius.circular(10.0)),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.all(Radius.circular(10.0)),
+                      borderSide: BorderSide(width: 1, color: Colors.redAccent),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.all(Radius.circular(10.0)),
+                      borderSide: BorderSide(width: 1, color: Colors.redAccent),
+                    ),
+                  ),
+                ),
+              ),
+              Text("현재 목표 몸무게: $goalWeight"),
+              SizedBox(height: 30,),
+              ElevatedButton(
+                  onPressed: () {
+                    _saveUserGoalWeight();
+                  },
+                  child: Text('변경')
+              )
+            ]
+        ),
+      ),
+
+    );
+  }
+
+}

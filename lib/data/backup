@@ -1,0 +1,335 @@
+chart_data.dart file
+
+final DateTime today = DateTime.now();
+
+// List<DateWeightData> chartData = getChartDataAll,
+
+List<DateWeightData> chartData = [
+  DateWeightData(DateTime(today.year, today.month, today.day - 6), 73.2),
+  DateWeightData(DateTime(today.year, today.month, today.day - 5), 73.1),
+  DateWeightData(DateTime(today.year, today.month, today.day - 4), 73.4),
+  DateWeightData(DateTime(today.year, today.month, today.day - 3), 73.6),
+  DateWeightData(DateTime(today.year, today.month, today.day - 2), 73.2),
+  DateWeightData(DateTime(today.year, today.month, today.day), 73.4),
+  DateWeightData(DateTime(today.year, today.month, today.day + 2), 73.8),
+];
+
+
+class ChartData {
+  static void addWeightData(DateTime date, double weight) {
+    chartData.add(DateWeightData(date, weight));
+    chartData.sort((a, b) => a.date.compareTo(b.date));
+  }
+  // 이미 데이터가 등록되어 있으면 해당 데이터를 지우고 새 데이터를 등록
+  static void removeAddWeightData(DateTime date, double weight, int existingDataIndex) {
+    chartData.removeAt(existingDataIndex);
+    chartData.add(DateWeightData(date, weight));
+    chartData.sort((a, b) => a.date.compareTo(b.date));
+  }
+}
+
+class DateWeightData {
+  DateWeightData(this.date, this.weight);
+  final DateTime date;
+  final double weight;
+}
+
+
+
+------------------------------------------------------------------------
+ScreenInput.dart
+
+import 'package:flutter/cupertino.dart';
+import'package:flutter/material.dart';
+import 'package:flutter_app/data/chart_data.dart';
+import 'package:flutter_app/data/dateweight_model.dart';
+import 'package:intl/intl.dart';
+import 'package:flutter_app/database/dbhelper.dart';
+
+// StatelessWidget은 변화지 않는 화면을 작업할 때 사용.
+// 변화는 화면을 작업 하고싶을 경우에는 StatefulWidget을 사용.
+class ScreenInput extends StatelessWidget {
+  const ScreenInput({super.key});
+
+
+  // MaterialApp = 앱으로서 기능을 할 수 있도록 도와주는 뼈대
+  @override
+  Widget build(BuildContext context) {
+
+    // return MaterialApp() -> Material 디자인 테마를 사용
+    return GestureDetector(
+      onTap: () {
+        FocusManager.instance.primaryFocus?.unfocus(); // 키보드 닫기 이벤트
+      },
+      child: MaterialApp(
+        title: "ScreenInput", // 앱 이름
+        debugShowCheckedModeBanner: false, // 타이틀 바 우측 띠 제거
+
+        // 앱의 기본적인 테마를 지정
+        theme: ThemeData(
+          primarySwatch: Colors.blue, // priamrySwatch 기본적인 앱의 색상을 지정
+        ),
+
+        home: MyWidget(), // 앱이 실행될 때 표시할 화면의 함수를 호출
+      ),
+    );
+  }
+}
+
+// 앱이 실행 될때 표시할 화면의 함수
+class MyWidget extends StatefulWidget {
+  const MyWidget({super.key});
+
+  @override
+  State<MyWidget> createState() => _MyWidgetState();
+}
+
+class _MyWidgetState extends State<MyWidget> {
+
+  // 날짜 데이터 , 몸무게 데이터
+   DateTime currentDay = DateTime.now();
+   TextEditingController myWeightController = TextEditingController();
+
+   @override
+  void initState() {
+    super.initState();
+  }
+
+  @override
+  void dispose() {
+    myWeightController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+
+    // int currentDataIndex = chartData.indexWhere((data) =>
+    // data.date.year == currentDay.year &&
+    //     data.date.month == currentDay.month &&
+    //     data.date.day == currentDay.day);
+    //
+    // double pastWeightData = chartData.elementAt(currentDataIndex-1).weight;
+
+    return Scaffold(
+      backgroundColor: Colors.white,
+      // appBar에 AppBar 위젯을 가져온다.
+      appBar: AppBar(
+        title: Text("입력"), // 타이틀 이름 지정
+        centerTitle: true, // 타이틀 이름을 가운데 정렬
+        elevation: 0.0, //elevation 속성을 통해 그림자 효과 제어
+        toolbarHeight: 60, // appBar 높이
+        leading: IconButton(
+          onPressed: () {},
+          icon: const Icon(Icons.menu),
+        ), // 좌측 아이콘 버튼
+      ),
+
+      // 앱의 body 부분
+      body: SingleChildScrollView(
+        child: Column(
+          children: <Widget>[
+            SizedBox(height: 20,),
+            // Text("${today.year.toString()}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}"
+            SizedBox(
+              height:60,
+              width:300,
+              child: ElevatedButton(
+                onPressed: () async {
+                  DateTime? newDate = await showDatePicker(
+                    context: context,
+                    initialDate : currentDay,
+                    firstDate : DateTime(1900),
+                    lastDate: DateTime(2100),
+                  );
+                  if (newDate == null) return;
+                  setState(() => currentDay = newDate);
+                },
+                style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xff99DBF5), //background color of button
+                    side: BorderSide(width:3, color:Colors.white70), //border width and color
+                    elevation: 3, //elevation of button
+                    shape: RoundedRectangleBorder( //to set border radius to button
+                        borderRadius: BorderRadius.circular(30)
+                    ),
+                    padding: EdgeInsets.all(20) //content padding inside button
+                ),
+                child: Text(
+                  "${currentDay.year} ${currentDay.month}.${currentDay.day} ${DateFormat('E').format(currentDay)}",
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 20,
+
+                  ),
+                  textAlign: TextAlign.center,
+                )
+              ),
+            ),
+            SizedBox(height: 10,),
+            Text("지난번에는 {pastWeightData}kg이었습니다."),
+            Form(
+                child: Theme(
+                  data: ThemeData(
+                    primaryColor: Colors.blueAccent,
+                    inputDecorationTheme: InputDecorationTheme(
+                      labelStyle: TextStyle(
+                        color: Colors.black,
+                        fontSize: 15.0,
+                      )
+                    )
+                  ),
+                  child: Container(
+                    padding: EdgeInsets.all(30.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: <Widget>[
+                        TextField(
+                          autofocus: true,
+                          controller: myWeightController,
+                          decoration: InputDecoration(
+                            hintText: "미입력",
+                            floatingLabelBehavior: FloatingLabelBehavior.always,
+                            hintStyle: TextStyle(
+                              color: Colors.grey,
+                              fontWeight: FontWeight.bold,
+                            ),
+                            labelText: "몸무게를 입력하시오",
+                          ),
+                          keyboardType: TextInputType.number,
+                        ),
+                        TextField(
+                          decoration: InputDecoration(
+                              hintText: "미입력",
+                              floatingLabelBehavior: FloatingLabelBehavior.always,
+                              hintStyle: TextStyle(
+                                color: Colors.grey,
+                                fontWeight: FontWeight.bold,
+                              ),
+                              labelText: "체지방률을 입력하시오"
+                          ),
+                          keyboardType: TextInputType.number,
+                        ),
+                        SizedBox(height: 70,),
+                        TextField(
+                          decoration: InputDecoration(
+                            hintText: "미입력",
+                            floatingLabelBehavior: FloatingLabelBehavior.always,
+                            hintStyle: TextStyle(
+                              color: Colors.grey,
+                              fontWeight: FontWeight.bold,
+                            ),
+                            labelText: "메모",
+                          ),
+                          keyboardType: TextInputType.text,
+
+                        ),
+                        SizedBox(height: 70,),
+                        ButtonTheme(
+                          padding: EdgeInsets.symmetric(horizontal: 5.0),
+                          minWidth: 400.0,
+                          height: 50.0,
+                          child: ElevatedButton(
+                            // 등록 버튼을 눌렀을 때의 동작
+                            // 화면이 떠야됨
+                            // 해당 날짜에 이미 몸무게 데이터가 입력되어 있다면 덮어쓰기하시겠습니까?
+                            // 해당 날짜에 몸무게 데이터가 입력이 안되어 있으면 바로 DateWeight 데이터를 ScreenGraph.dart로 전송하고 등록이 완료되었습니다 (Dialog 출력)
+                            onPressed: () {
+                              double weight = double.tryParse(myWeightController.text) ?? 0.0;
+                              int existingDataIndex = chartData.indexWhere((data) =>
+                              data.date?.year == currentDay.year &&
+                                  data.date?.month == currentDay.month &&
+                                  data.date?.day == currentDay.day); // today.day + 3 대신에 currentDate이 나중에 들어가야 함
+
+                              // hasData
+                              if(existingDataIndex != -1){
+                                _showdialogA(context, existingDataIndex, weight, currentDay);
+                              }
+                              else {
+                                // ADD
+                                _saveWeightData(weight, currentDay);
+                                _showdialogB(context);
+                              }
+
+                            },
+                            style: TextButton.styleFrom(
+                              backgroundColor: Colors.blue,
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(50)),
+                              // padding: EdgeInsets.all(50.0),
+                            ),
+                            child: Text(
+                              '등록',
+                              style: TextStyle(
+                                fontWeight: FontWeight.w200,
+                                color: Colors.white,
+                                fontSize: 20.0
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ))
+          ],
+        ),
+      ),
+
+    );
+  }
+}
+
+// 이미 데이터가 입력되어 있는 경우 덮어쓰기 다이럴로그 출력
+Future<dynamic> _showdialogA(BuildContext context, int existingdataidx, double weight, DateTime currentday) {
+  return showDialog(
+    context: context,
+    builder: (BuildContext context) => AlertDialog(
+      content: Text('이미 데이터가 등록되어 있습니다. 덮어쓰기 하시겠습니까?', style: TextStyle(fontWeight: FontWeight.bold),),
+      actions: [
+        // 취소 버튼을 누르면 아무 일도 일어나지 않음 (데이터 갱신X)
+        ElevatedButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text('취소')),
+        // 덮어쓰기 버튼을 누르면 chartData 갱신
+        ElevatedButton(
+            onPressed: () {
+              // UPDATE
+              _removeSaveWeightData(weight, existingdataidx, currentday);
+              Navigator.of(context).pop();},
+            child: Text('덮어쓰기')),
+      ],
+    ),
+  );
+}
+
+// 새로운 데이터를 넘겨주는 경우 출력되는 다이얼로그
+Future<dynamic> _showdialogB(BuildContext context) {
+  return showDialog(
+    context: context,
+    builder: (BuildContext context) => AlertDialog(
+      content: Text('등록이 완료되었습니다'),
+      actions: [
+        ElevatedButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text('나가기')),
+      ],
+    ),
+  );
+}
+
+void _saveWeightData(double weight, DateTime currentDate) async{
+  // currentDate 변수를 위에서 정해주어야 함 (currentDate 변수는 데이터를 입력하려고 하는 날짜를 저장)
+  // 데이터베이스에 날짜, 몸무게 데이터를 저장 (ADD)
+  // ChartData.addWeightData(DateTime(currentDate.year, currentDate.month, currentDate.day), weight);
+  await DatabaseHelper.instance.add(
+    DateWeightData(date: currentDate, weight: weight),
+  );
+}
+
+void _removeSaveWeightData(double weight, int existingDataIndex, DateTime currentDate) async {
+  // currentDate 변수를 위에서 정해주어야 함 (currentDate 변수는 데이터를 입력하려고 하는 날짜를 저장)
+  // 데이터베이스에 날짜, 몸무게 데이터를 수정 (UPDATE)
+  // ChartData.removeAddWeightData(DateTime(currentDate.year, currentDate.month, currentDate.day), weight, existingDataIndex);
+  await DatabaseHelper.instance.update(
+    DateWeightData(date: currentDate, weight: weight),
+  );
+}

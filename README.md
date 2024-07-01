@@ -1,2 +1,2 @@
-## Diet Management Application using Flutter
+## Diet App using Flutter
 
